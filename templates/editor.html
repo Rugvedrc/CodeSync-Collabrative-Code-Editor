@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSync Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Files</h3>
+            <div class="file-actions">
+                <input type="text" id="new-filename" placeholder="filename.py">
+                <button id="create-file-btn"><i class="fas fa-plus"></i></button>
+            </div>
+            <ul class="file-list" id="file-list"></ul>
+            <h3>Users Online</h3>
+            <ul class="user-list" id="user-list"></ul>
+        </div>
+        
+        <div class="main-editor">
+            <div class="toolbar">
+                <select id="language-select">
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="java">Java</option>
+                    <option value="c">C</option>
+                    <option value="cpp">C++</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                </select>
+                <button id="run-button" class="run-btn"><i class="fas fa-play"></i> Run</button>
+                <button id="ai-suggestion-btn" class="ai-btn"><i class="fas fa-lightbulb"></i> Suggest</button>
+                <button id="ai-review-btn" class="ai-btn"><i class="fas fa-search"></i> Review</button>
+                <button id="ai-explain-btn" class="ai-btn"><i class="fas fa-book"></i> Explain</button>
+                <button id="format-code-btn"><i class="fas fa-code"></i> Format</button>
+                <button id="download-button"><i class="fas fa-download"></i> Download</button>
+            </div>
+            <div class="editor-container">
+                <textarea id="editor"></textarea>
+                <div class="status-bar" id="status-bar">Ready</div>
+            </div>
+            <div class="output-panel" id="output-panel">
+                <div class="output-header">
+                    <span>Output</span>
+                    <div class="output-controls">
+                        <button id="copy-output-btn" class="copy-btn" title="Copy Output"><i class="fas fa-copy"></i></button>
+                        <button id="clear-output-btn" class="clear-btn" title="Clear Output"><i class="fas fa-trash"></i></button>
+                        <button id="toggle-output-btn" class="toggle-btn" title="Toggle Output Panel"><i class="fas fa-chevron-down"></i></button>
+                    </div>
+                </div>
+                <div class="output-content" id="output"></div>
+            </div>
+        </div>
+        
+        <div class="chat-panel">
+            <div class="chat-header">
+                <span>Live Chat</span>
+                <button id="clear-chat-btn" class="clear-btn" title="Clear Chat"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="chat-message" placeholder="Type message or /ai your question">
+                <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for AI Responses -->
+    <div id="ai-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">AI Response</h3>
+                <div class="modal-controls">
+                    <button id="copy-ai-response-btn" class="copy-btn" title="Copy Response"><i class="fas fa-copy"></i></button>
+                    <button id="close-modal-btn" class="close-btn" title="Close"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

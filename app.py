@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, join_room, leave_room, emit
@@ -7,15 +9,12 @@ import time
 import requests
 from dotenv import load_dotenv
 load_dotenv()
-import eventlet
-eventlet.monkey_patch()
-
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Load environment variablesapp.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
-
+# Load environment
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 JDOODLE_CLIENT_ID = os.getenv('JDOODLE_CLIENT_ID')
 JDOODLE_CLIENT_SECRET = os.getenv('JDOODLE_CLIENT_SECRET')
 JDOODLE_API_URL = os.getenv('JDOODLE_API_URL')

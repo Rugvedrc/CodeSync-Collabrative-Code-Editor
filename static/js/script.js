@@ -468,17 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    document.getElementById('ai-generate-btn').onclick = () => {
-        const description = prompt('What code would you like to generate?');
-        if (description && currentFile) {
-            const file = roomData.files[currentFile];
-            socket.emit('ai_generate_code', {
-                language: file.language,
-                description: description
-            });
-            updateStatus('Generating AI code...');
-        }
-    };
     
     // Utility functions
     document.getElementById('format-code-btn').onclick = () => {

@@ -193,7 +193,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-**Your Name** - [rugved.rc1@gmaail.com](mailto:rugved.rc1@gmail.com)
+**Rugved Chandekar** - [rugved.rc1@gmaail.com](mailto:rugved.rc1@gmail.com)
 
 **Project Link**: [https://github.com/Rugvedrc/codesync](https://github.com/Rugvedrc/codesync)
 

@@ -226,7 +226,7 @@ def handle_chat_message(data):
 def handle_get_suggestion(data):
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
-        prompt = f"you are a ai assistant at my collabrative code editor website so Provide a code suggestion for the following {data['language']} code:\n\n```\n{data['code']}\n``` only provide neccessary usefull things only nothing extra"
+        prompt = f"you are a ai assistant at my collabrative code editor website so Provide a code suggestion for the following {data['language']} code:\n\n```\n{data['code']}\n``` only provide neccessary usefull things only nothing extra no asterircs no dash no special character strictly just alphabets or numbers"
         response = model.generate_content(prompt)
         emit('code_suggestion', {'suggestion': response.text})
     except Exception as e:
@@ -236,7 +236,7 @@ def handle_get_suggestion(data):
 def handle_ai_code_review(data):
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
-        prompt = f"you are a ai assistant at my collabrative code editor website so Review this {data['language']} code and provide suggestions:\n\n```\n{data['code']}\n```only provide neccessary usefull things only nothing extra"
+        prompt = f"you are a ai assistant at my collabrative code editor website so Review this {data['language']} code and provide suggestions:\n\n```\n{data['code']}\n```only provide neccessary usefull things only nothing extra no asterircs no dash no special character strictly just alphabets or numbers"
         response = model.generate_content(prompt)
         emit('ai_response', {'type': 'code_review', 'content': response.text})
     except Exception as e:
@@ -246,7 +246,7 @@ def handle_ai_code_review(data):
 def handle_ai_explain_code(data):
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
-        prompt = f"you are a ai assistant at my collabrative code editor website so Explain this {data['language']} code:\n\n```\n{data['code']}\n``` only provide neccessary usefull things only nothing extra"
+        prompt = f"you are a ai assistant at my collabrative code editor website so Explain this {data['language']} code:\n\n```\n{data['code']}\n``` only provide neccessary usefull things only nothing extra no asterircs no dash no special character strictly just alphabets or numbers"
         response = model.generate_content(prompt)
         emit('ai_response', {'type': 'explanation', 'content': response.text})
     except Exception as e:
@@ -256,7 +256,7 @@ def handle_ai_explain_code(data):
 def handle_ai_generate_code(data):
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
-        prompt = f"you are a ai assistant at my collabrative code editor website so Generate {data['language']} code for: {data['description']} only provide neccessary usefull things only nothing extra"
+        prompt = f"you are a ai assistant at my collabrative code editor website so Generate {data['language']} code for: {data['description']} only provide neccessary usefull things only nothing extra no asterircs no dash no special character strictly just alphabets or numbers"
         response = model.generate_content(prompt)
         emit('ai_response', {'type': 'code_generation', 'content': response.text})
     except Exception as e:

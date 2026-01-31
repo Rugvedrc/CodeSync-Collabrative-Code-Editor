@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSync | Next-Gen Collab</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .hero-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: orb-float 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 300px;
+            height: 300px;
+            background: rgba(0, 242, 254, 0.15);
+            top: 20%;
+            left: 20%;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: rgba(79, 172, 254, 0.1);
+            bottom: 10%;
+            right: 15%;
+            animation-delay: -5s;
+        }
+
+        @keyframes orb-float {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(30px, -30px);
+            }
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            line-height: 1.1;
+            margin-bottom: var(--spacing-md);
+            text-align: center;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xl);
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .room-input-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.3s;
+        }
+
+        .room-input-container:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .room-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 12px 16px;
+            flex-grow: 1;
+            font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
+            outline: none;
+        }
+
+        .create-btn {
+            background: var(--gradient-primary);
+            border: none;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .create-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+        }
+
+        .recent-rooms {
+            margin-top: var(--spacing-xl);
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .room-chip {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .room-chip:hover {
+            border-color: var(--secondary);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .features {
+            display: flex;
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .feature-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            color: var(--text-muted);
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            background: rgba(0, 242, 254, 0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="hero-container animate-fade-in">
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-code"></i></div>
+                <span>Real-time</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-robot"></i></div>
+                <span>AI Assist</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-terminal"></i></div>
+                <span>Terminal</span>
+            </div>
+        </div>
+
+        <h1 class="hero-title">
+            Code <span class="text-gradient">Beyond</span> Limits
+        </h1>
+        <p class="hero-subtitle">
+            A god-tier collaborative environment with integrated AI, terminal access, and seamless real-time
+            synchronization.
+        </p>
+
+        <form id="join-form" class="room-input-container">
+            <input type="text" id="room-id" class="room-input" placeholder="Enter Room Name..." required
+                autocomplete="off">
+            <button type="submit" class="create-btn">
+                Launch <i class="fas fa-rocket"></i>
+            </button>
+        </form>
+
+        <div id="recent-rooms" class="recent-rooms">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('join-form');
+            const input = document.getElementById('room-id');
+            const recentContainer = document.getElementById('recent-rooms');
+
+            // Load recents
+            let recents = JSON.parse(localStorage.getItem('recent_rooms') || '[]');
+
+            if (recents.length > 0) {
+                const label = document.createElement('div');
+                label.style.width = '100%';
+                label.style.textAlign = 'center';
+                label.style.fontSize = '0.8rem';
+                label.style.opacity = '0.5';
+                label.style.marginBottom = '10px';
+                label.textContent = 'RECENT SESSIONS';
+                recentContainer.appendChild(label);
+
+                recents.slice(0, 3).forEach(room => {
+                    const chip = document.createElement('div');
+                    chip.className = 'room-chip glass';
+                    chip.innerHTML = `<i class="fas fa-history"></i> ${room}`;
+                    chip.onclick = () => window.location.href = `/room/${room}`;
+                    recentContainer.appendChild(chip);
+                });
+            }
+
+            // Generate random room name if empty
+            const adjective = ['Cosmic', 'Nebula', 'Quantum', 'Hyper', 'Sonic', 'Void'];
+            const noun = ['Coder', 'Base', 'Station', 'Hub', 'Lab', 'Core'];
+            const randomName = adjective[Math.floor(Math.random() * adjective.length)] +
+                noun[Math.floor(Math.random() * noun.length)] +
+                Math.floor(Math.random() * 100);
+
+            input.placeholder = `e.g. ${randomName}`;
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const room = input.value.trim() || randomName;
+
+                // Save to recents
+                recents = recents.filter(r => r !== room);
+                recents.unshift(room);
+                localStorage.setItem('recent_rooms', JSON.stringify(recents));
+
+                window.location.href = `/room/${room}`;
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSync IDE</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ext-language_tools.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Layout Grid */
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ide-header {
+            height: 60px;
+            background: rgba(5, 5, 16, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--spacing-md);
+            z-index: 10;
+        }
+
+        .ide-main {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+            height: calc(100vh - 60px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-dark-secondary);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .sidebar-tab:hover {
+            color: var(--text-main);
+        }
+
+        .sidebar-tab[data-active="true"] {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .sidebar-panel {
+            display: none;
+            padding: var(--spacing-sm);
+            height: 100%;
+        }
+
+        .sidebar-panel[data-active="true"] {
+            display: block;
+        }
+
+        /* File Tree */
+        .file-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .file-item.active {
+            background: rgba(79, 172, 254, 0.15);
+            color: var(--primary);
+            border-left: 2px solid var(--primary);
+        }
+
+        .file-icon {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .delete-btn {
+            display: none;
+            color: var(--error);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .file-item:hover .delete-btn {
+            display: block;
+        }
+
+        /* Editor Area */
+        .editor-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+            /* Ace default monokai bg match roughly */
+            position: relative;
+        }
+
+        .editor-tabs {
+            height: 35px;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .editor-tab {
+            padding: 0 16px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .editor-tab.active {
+            background: #272822;
+            /* Monokai bg */
+            color: #fff;
+            border-top: 2px solid var(--primary);
+        }
+
+        #editor {
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        /* Right Panel (Output/Terminal/Chat/AI) */
+        .right-panel {
+            width: 400px;
+            background: var(--bg-dark-secondary);
+            border-left: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+
+        .output-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .output-tab {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .output-tab[data-active="true"] {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .output-content {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .output-panel {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .output-panel[data-active="true"] {
+            display: flex;
+        }
+
+        /* Terminal & Output */
+        .terminal-container,
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .console-output {
+            flex-grow: 1;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            overflow-y: auto;
+            color: #dcdccc;
+            white-space: pre-wrap;
+        }
+
+        .console-output strong {
+            color: var(--success);
+        }
+
+        .console-output [data-type="error"] {
+            color: var(--error);
+        }
+
+        .input-bar {
+            padding: 10px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Chat */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-messages div {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            max-width: 85%;
+        }
+
+        .chat-messages div strong {
+            color: var(--primary);
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .chat-messages div span {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            float: right;
+            margin-left: 8px;
+        }
+
+        .chat-messages div p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* AI Panel (Drawer style or modal, but let's integrate to right panel for now as it's cleaner) */
+        /* Wait, the JS toggles AI panel visibility separately. Let's make it a Floating Glass Panel */
+
+        #ai-panel {
+            position: fixed;
+            right: 20px;
+            top: 70px;
+            width: 350px;
+            height: 600px;
+            /* Max height */
+            bottom: 20px;
+            background: rgba(15, 15, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-md);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            /* Toggled by JS */
+            flex-direction: column;
+            transform: translateX(110%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #ai-panel[data-visible="true"] {
+            display: flex;
+            transform: translateX(0);
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            width: 400px;
+            box-shadow: var(--shadow-glass);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .users-list {
+            display: flex;
+            gap: -8px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Nav -->
+    <header class="ide-header">
+        <div class="flex-center" style="gap: 15px;">
+            <div style="font-weight: 800; font-size: 1.2rem; letter-spacing: -1px;">
+                <i class="fas fa-cube text-gradient"></i> CodeSync
+            </div>
+            <div class="glass" style="padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                Room: <span id="current-room-id" style="color: var(--primary); font-family: monospace;">{{ room_id
+                    }}</span>
+                <button class="btn-icon" id="copy-room-id" title="Copy ID"><i class="fas fa-copy"></i></button>
+            </div>
+        </div>
+
+        <div class="flex-center" style="gap: 10px;">
+            <!-- Action Buttons -->
+            <button id="run-code-btn" class="btn btn-primary" title="Run Code"><i class="fas fa-play"></i> Run</button>
+            <button id="save-file-btn" class="btn btn-ghost" title="Save (Ctrl+S)"><i class="fas fa-save"></i></button>
+            <button id="analyze-code-btn" class="btn btn-ghost" title="Analyze"><i
+                    class="fas fa-chart-line"></i></button>
+            <button id="ai-assist-btn" class="btn btn-ghost" title="AI Assistant" style="color: var(--accent);"><i
+                    class="fas fa-sparkles"></i></button>
+            <button id="settings-btn" class="btn btn-ghost" title="Settings"><i class="fas fa-cog"></i></button>
+
+            <div class="users-list" id="users-list" style="margin: 0 15px;">
+                <!-- Avatars injected here -->
+            </div>
+
+            <span id="username-display" style="font-size: 0.9rem; color: var(--text-muted); margin-right: 10px;"></span>
+            <button id="leave-room" class="btn" style="background: rgba(255, 118, 118, 0.1); color: var(--error);"><i
+                    class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="ide-main">
+
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-tabs" id="sidebar-tabs">
+                <button class="sidebar-tab" data-tab="files"><i class="fas fa-folder"></i></button>
+                <button class="sidebar-tab" data-tab="snippets"><i class="fas fa-code"></i></button>
+            </div>
+
+            <div class="sidebar-content" id="sidebar-content">
+                <!-- Files Panel -->
+                <div class="sidebar-panel" data-panel="files" data-active="true">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px;">
+                        <span
+                            style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Explorer</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="btn-icon" id="new-file-btn" title="New File"><i
+                                    class="fas fa-file-circle-plus"></i></button>
+                            <button class="btn-icon" id="create-dir-btn" title="New Folder"><i
+                                    class="fas fa-folder-plus"></i></button>
+                            <button class="btn-icon" id="refresh-files-btn" title="Refresh"><i
+                                    class="fas fa-sync-alt"></i></button>
+                        </div>
+                    </div>
+                    <div id="files-list">
+                        <!-- File items loaded here -->
+                    </div>
+                </div>
+
+                <!-- Snippets Panel (Placeholder for now) -->
+                <div class="sidebar-panel" data-panel="snippets">
+                    <div style="padding: 20px; text-align: center; color: var(--text-muted);">
+                        <i class="fas fa-puzzle-piece" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.3;"></i>
+                        <p>Snippets coming soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-area">
+            <div class="editor-tabs">
+                <div class="editor-tab active">
+                    <i class="fas fa-file-code"></i>
+                    <span id="current-file">No file selected</span>
+                    <button class="btn-icon" id="close-file-btn" style="margin-left: 5px; padding: 2px;"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div style="margin-left: auto; padding-right: 10px; font-size: 0.8rem; color: var(--text-muted);"
+                    id="file-status"></div>
+            </div>
+            <div id="editor"></div>
+        </div>
+
+        <!-- Right Panel (Output/Terminal/Chat) -->
+        <div class="right-panel">
+            <div class="output-tabs" id="output-tabs">
+                <button class="output-tab" data-output-tab="terminal">Terminal</button>
+                <button class="output-tab" data-output-tab="output">Output</button>
+                <button class="output-tab" data-output-tab="chat">Chat</button>
+                <button class="output-tab" data-output-tab="analysis">Analysis</button>
+            </div>
+
+            <div class="output-content" id="output-content">
+
+                <!-- Terminal -->
+                <div class="output-panel" data-output-panel="terminal" data-active="true">
+                    <div class="console-output custom-scroll" id="terminal-output">
+                        <div style="color: var(--text-muted);">Cycle Terminal v1.0 connected...</div>
+                    </div>
+                    <div class="input-bar">
+                        <span style="color: var(--success); font-family: monospace; align-self: center;">$</span>
+                        <input type="text" id="terminal-input" class="input w-full" placeholder="Enter command..."
+                            style="background: transparent; border: none;">
+                        <button id="terminal-send" class="btn-icon"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- Output -->
+                <div class="output-panel" data-output-panel="output">
+                    <div
+                        style="padding: 8px; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--glass-border);">
+                        <button class="btn-icon" id="clear-output-btn" title="Clear"><i
+                                class="fas fa-trash"></i></button>
+                    </div>
+                    <pre class="console-output custom-scroll" id="output-text" style="font-size: 0.9rem;"></pre>
+                    <div class="input-bar">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">Input
+                            (stdin):</span>
+                        <input type="text" id="code-input" class="input w-full" placeholder="Input for program..."
+                            style="background: transparent; border: none;">
+                    </div>
+                </div>
+
+                <!-- Chat -->
+                <div class="output-panel" data-output-panel="chat">
+                    <div class="chat-messages custom-scroll" id="chat-messages"></div>
+                    <div class="input-bar">
+                        <input type="text" id="chat-input" class="input w-full" placeholder="Type a message..."
+                            style="background: transparent; border: none;">
+                        <button id="send-chat" class="btn-icon"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- Analysis -->
+                <div class="output-panel" data-output-panel="analysis">
+                    <div style="padding: 15px; overflow-y: auto;">
+                        <div id="metrics" style="margin-bottom: 20px;"></div>
+                        <div id="suggestions"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Panel Floating -->
+    <div id="ai-panel" class="glass-panel">
+        <div
+            style="padding: 15px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-gradient"><i class="fas fa-robot"></i> AI Assistant</h3>
+            <button class="btn-icon" id="close-ai-panel"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div
+            style="padding: 10px; border-bottom: 1px solid var(--glass-border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <select id="ai-provider" class="input" style="width: 100%;">
+                <option value="gemini">Gemini</option>
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+            </select>
+            <select id="ai-task" class="input" style="width: 100%;">
+                <option value="chat">Chat</option>
+                <option value="explain">Explain</option>
+                <option value="debug">Debug</option>
+                <option value="refactor">Refactor</option>
+            </select>
+            <input type="password" id="ai-api-key" class="input" placeholder="API Key" style="grid-column: span 2;">
+            <input type="text" id="ai-model" class="input" value="gemini-pro"
+                style="grid-column: span 2; display: none;"> <!-- Hidden default -->
+        </div>
+
+        <div id="ai-messages"
+            style="flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+            <div data-sender="system" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                <strong>System:</strong> I can help you code, debug, and explain logic. Set your API Key to start.
+            </div>
+        </div>
+
+        <div style="padding: 10px; border-top: 1px solid var(--glass-border);">
+            <div style="margin-bottom: 8px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="include-code-context" checked> <label for="include-code-context">Include File
+                    Context</label>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <textarea id="ai-input" class="input" style="flex-grow: 1; resize: none; height: 40px;"
+                    placeholder="Ask AI..."></textarea>
+                <button id="send-ai-btn" class="btn btn-primary" style="padding: 5px 15px;"><i
+                        class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- New File -->
+    <div id="new-file-modal" class="modal">
+        <div class="modal-content glass-panel">
+            <h3 style="margin-bottom: 15px;">New File</h3>
+            <form id="new-file-form">
+                <input type="text" id="new-file-name" class="input w-full" placeholder="filename.py"
+                    style="margin-bottom: 10px;" required>
+                <select id="file-language" class="input w-full" style="margin-bottom: 20px;">
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                </select>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" id="close-new-file" class="btn btn-ghost">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content glass-panel">
+            <h3 style="margin-bottom: 15px;">Settings</h3>
+            <div style="display: grid; gap: 15px;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Theme</label>
+                    <select id="theme-select" class="input w-full">
+                        <option value="monokai">Monokai</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="github">GitHub</option>
+                        <option value="tomorrow_night">Tomorrow Night</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Font
+                        Size</label>
+                    <input type="number" id="font-size" class="input w-full" value="14">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Tab
+                        Size</label>
+                    <input type="number" id="tab-size" class="input w-full" value="4">
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="auto-save">
+                    <label for="auto-save">Auto Save</label>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button id="close-settings" class="btn btn-ghost">Close</button>
+                <button id="save-settings-btn" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ROOM_ID = "{{ room_id }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+
+    <!-- Modal Logic helpers if not in room.js -->
+    <script>
+        function showNewFileModal() { document.getElementById('new-file-modal').classList.add('visible'); }
+        function hideNewFileModal() { document.getElementById('new-file-modal').classList.remove('visible'); }
+
+        function showSettingsModal() { document.getElementById('settings-modal').classList.add('visible'); }
+        function hideSettingsModal() { document.getElementById('settings-modal').classList.remove('visible'); }
+
+        function updateFileStatus(status) {
+            const el = document.getElementById('file-status');
+            el.textContent = status;
+            if (status === 'Saved') { el.style.color = 'var(--success)'; setTimeout(() => el.style.color = 'var(--text-muted)', 2000); }
+            else if (status === 'Modified') { el.style.color = 'var(--accent)'; }
+            else { el.style.color = 'var(--text-muted)'; }
+        }
+
+        // Add some fancy load in
+        document.querySelector('.ide-main').classList.add('animate-fade-in');
+    </script>
+</body>
+
+</html>
